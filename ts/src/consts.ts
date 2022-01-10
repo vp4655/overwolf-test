@@ -1,3 +1,5 @@
+import axios from "axios";
+
 export const kGamesFeatures = new Map<number, string[]>([
   // Fortnite
   [
@@ -245,3 +247,8 @@ export const kWindowNames = {
 export const kHotkeys = {
   toggle: 'sample_app_ts_showhide'
 };
+
+export const API = axios.create({
+  withCredentials: true,
+  baseURL: 'http://localhost:3000'
+})

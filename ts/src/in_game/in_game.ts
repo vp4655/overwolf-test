@@ -5,7 +5,7 @@ import {
 } from "@overwolf/overwolf-api-ts";
 
 import { AppWindow } from "../AppWindow";
-import { kHotkeys, kWindowNames, kGamesFeatures } from "../consts";
+import { kHotkeys, kWindowNames, kGamesFeatures, API } from "../consts";
 
 import WindowState = overwolf.windows.WindowStateEx;
 
@@ -28,6 +28,15 @@ class InGame extends AppWindow {
 
     this.setToggleHotkeyBehavior();
     this.setToggleHotkeyText();
+
+    /*axios.post('http://localhost:3000/authentication/log-in', {
+        email: "gameio@gmail.com",
+        password: "gameio"
+    }).then((response: any) => {
+        console.log('logged in');
+    }).catch((error) => {
+        console.log('not logged in');
+    })*/
   }
 
   public static instance() {
@@ -58,6 +67,7 @@ class InGame extends AppWindow {
 
   private onInfoUpdates(info) {
     this.logLine(this._infoLog, info, false);
+    this.postGameEvent(info, 'info event');
   }
 
   // Special events will be highlighted in the event log
@@ -78,6 +88,19 @@ class InGame extends AppWindow {
       return false
     });
     this.logLine(this._eventsLog, e, shouldHighlight);
+    this.postGameEvent(e, 'game event');
+  }
+
+  private async postGameEvent(event: any, type: string) {
+    API.post('http://localhost:3000/game-events', {
+        name: "Gamer",
+        event_data: event
+    }).then((response: any) => {
+        console.log('Event of type ' + type);
+        console.log(response.data)
+    }).catch((error: any) => {
+        console.log(error)
+    })
   }
 
   // Displays the toggle minimize/restore hotkey in the window header

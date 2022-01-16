@@ -248,7 +248,16 @@ export const kHotkeys = {
   toggle: 'sample_app_ts_showhide'
 };
 
-export const API = axios.create({
-  withCredentials: true,
+export let API = axios.create({
   baseURL: 'http://localhost:3000'
 })
+
+export const setAuthToken = token => {
+  if (token) {
+  //applying token
+  API.defaults.headers.common['Authorization'] = token;
+  } else {
+  //deleting the token from header
+  delete API.defaults.headers.common['Authorization'];
+  }
+ }

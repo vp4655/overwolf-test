@@ -1,5 +1,6 @@
 import { AppWindow } from "../AppWindow";
-import { kWindowNames, API } from "../consts";
+import { kWindowNames, API, setAuthToken } from "../consts";
+import axios from "axios";
 
 // The desktop window is the window displayed while game is not running.
 // In our case, our desktop window has no logic - it only displays static data.
@@ -42,6 +43,8 @@ class Desktop extends AppWindow {
             password: this._password.value
         }).then((response: any) => {
             this._loginText.innerHTML = "Welcome, " + response.data.name + '!';
+            localStorage.setItem('jwt_token', response.data.tokens.access_token);
+            setAuthToken(response.data.tokens.access_token);
         }).catch((error) => {
             this._loginText.innerHTML = "Unsuccessful login attempt!";
         })

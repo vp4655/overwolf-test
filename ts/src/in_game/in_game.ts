@@ -95,7 +95,11 @@ class InGame extends AppWindow {
     API.post('http://localhost:3000/game-events', {
         name: "Gamer",
         event_data: event
-    }).then((response: any) => {
+    }, {
+      headers: {
+         Authorization: "Bearer " + localStorage.getItem('jwt_token')
+      }
+   }).then((response: any) => {
         console.log('Event of type ' + type);
         console.log(response.data)
     }).catch((error: any) => {

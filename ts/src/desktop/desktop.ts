@@ -38,7 +38,7 @@ class Desktop extends AppWindow {
 
   public async run() {
     this._loginBtn.onclick = () => {
-        API.post('authentication/log-in', {
+        API.post('/api/v1/authentication/log-in', {
             email: this._email.value,
             password: this._password.value
         }).then((response: any) => {

@@ -1,7 +1,8 @@
 import {
   OWGames,
   OWGamesEvents,
-  OWHotkeys
+  OWHotkeys,
+  OWGameListener
 } from "@overwolf/overwolf-api-ts";
 
 import { AppWindow } from "../AppWindow";
@@ -17,8 +18,12 @@ import WindowState = overwolf.windows.WindowStateEx;
 class InGame extends AppWindow {
   private static _instance: InGame;
   private _gameEventsListener: OWGamesEvents;
+  private _gameListener: OWGameListener;
   private _eventsLog: HTMLElement;
   private _infoLog: HTMLElement;
+  private matchId: any;
+  private gameId: string;
+  private matchMode: string;
 
   private constructor() {
     super(kWindowNames.inGame);
@@ -29,14 +34,10 @@ class InGame extends AppWindow {
     this.setToggleHotkeyBehavior();
     this.setToggleHotkeyText();
 
-    /*axios.post('http://localhost:3000/authentication/log-in', {
-        email: "gameio@gmail.com",
-        password: "gameio"
-    }).then((response: any) => {
-        console.log('logged in');
-    }).catch((error) => {
-        console.log('not logged in');
-    })*/
+    
+    this.matchId = null;
+    this.gameId = "21";
+    this.matchMode = null;
   }
 
   public static instance() {
@@ -61,11 +62,25 @@ class InGame extends AppWindow {
         gameFeatures
       );
 
+      this._gameListener = new OWGameListener({
+        onGameStarted: this.onGameStarted.bind(this)
+      });
+
       this._gameEventsListener.start();
+      this._gameListener.start();
     }
   }
 
+  private onGameStarted(gameStartedInfo) {
+    console.log("ON GAME STARTED INFO:", gameStartedInfo, gameStartedInfo.classId);
+    this.gameId = gameStartedInfo.classId.toString();
+  }
+
   private onInfoUpdates(info) {
+    if ("match_info" in info) {
+      this.storeMatchId(info.match_info);
+      this.storeMatchMode(info.match_info);
+    }
     this.logLine(this._infoLog, info, false);
     this.postGameEvent(info, 'info event');
   }
@@ -92,19 +107,48 @@ class InGame extends AppWindow {
   }
 
   private async postGameEvent(event: any, type: string) {
-    API.post('http://localhost:3000/game-events', {
-        name: "Gamer",
-        event_data: event
-    }, {
-      headers: {
-         Authorization: "Bearer " + localStorage.getItem('jwt_token')
-      }
-   }).then((response: any) => {
-        console.log('Event of type ' + type);
-        console.log(response.data)
-    }).catch((error: any) => {
-        console.log(error)
-    })
+    if (this.gameId && this.matchMode && this.matchId) {
+      API.post(
+          'http://localhost:3000/api/v1/game-events',
+          this.generateProductionData(event),
+          {
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem('jwt_token')
+          }
+      }).then((response: any) => {
+          console.log('Event of type ' + type);
+          console.log(response.data)
+      }).catch((error: any) => {
+          console.log(error)
+      })
+    }
+  }
+
+  private generateProductionData (event) {
+    const timestamp = new Date();
+    return {
+      event_data: event,
+      time_of_event: timestamp.toISOString(),
+      game_id: this.gameId,
+      game_mode: this.matchMode,
+      match_id: this.matchId
+    }
+  }
+
+  private storeMatchId (event) {
+    console.log('checking match id', event);
+    if ("matchID" in event) {
+      console.log('storing match id', event.matchID);
+      this.matchId = event.matchID;
+    }
+  }
+
+  private storeMatchMode (event) {
+    console.log('checking match mode', event);
+    if ("mode" in event) {
+      console.log('storing match mode', event.mode);
+      this.matchMode = event.mode;
+    }
   }
 
   // Displays the toggle minimize/restore hotkey in the window header
